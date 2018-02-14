@@ -69,50 +69,54 @@ class AdminMediaMovePlugin extends Plugin
             'onPagesInitialized' => ['onTwigExtensions', 0],
         ]);
 
-        $this->grav['media-actions']->addAction("MediaMove", "Move", "arrows", function ($page, $mediaName, $payload) {
+        $this->grav['media-actions']->addAction([
+            'actionId' => "MediaMove",
+            'caption' => "Move",
+            'icon' => "arrows",
+            'handler' => function ($page, $mediaName, $payload) {
 
-            $destination_route = $payload['destination_route'];
+                $destination_route = $payload['destination_route'];
 
-            if (!$destination_route || !$page || !$mediaName || !$payload) {
-                $this->outputError("Invalid input");
+                if (!$destination_route || !$page || !$mediaName || !$payload) {
+                    $this->outputError("Invalid input");
+                }
+
+                $basePath = $page->path() . DS;
+                $filePath = $basePath . $mediaName;
+                if (!file_exists($filePath)) {
+                    $this->outputError("Media file not found");
+                }
+
+                // Locate the target page
+                $targetPage = $this->grav['pages']->find($destination_route);
+                if (!$targetPage) {
+                    $this->outputError("Page for route $destination_route not found");
+                }
+
+                $path = $targetPage->path();
+                try {
+                    rename($filePath, "$path/$mediaName");
+                    $this->grav['log']->info("Moved media file '$mediaName' to '$path'");
+                } catch (\Exception $e) {
+                    $this->outputError("Could not move file: " . $e);
+                }
+
+                $ret = [
+                    "error" => false
+                ];
+
+                // Redirects will not work for fetch, so send destination url in result
+                if (get($payload, "go", false)) {
+                    // Get the admin edit-page url
+                    //$url = $this->grav['twig']->twig->getExtension('Grav\Plugin\Admin\AdminTwigExtension')->getPageUrl($this, $targetPage);
+                    $url = $this->grav['uri']->rootUrl(false) . "/admin/pages" . $targetPage->route();
+                    $ret["destination_url"] = $url;
+                }
+
+                //header('HTTP/1.1 200 OK');
+                return $ret;
             }
-
-            $basePath = $page->path() . DS;
-            $filePath = $basePath . $mediaName;
-            if (!file_exists($filePath)) {
-                $this->outputError("Media file not found");
-            }
-
-            // Locate the target page
-            $targetPage = $this->grav['pages']->find($destination_route);
-            if (!$targetPage) {
-                $this->outputError("Page for route $destination_route not found");
-            }
-
-            $path = $targetPage->path();
-            try {
-                rename($filePath, "$path/$mediaName");
-                $this->grav['log']->info("Moved media file '$mediaName' to '$path'");
-            } catch (\Exception $e) {
-                $this->outputError("Could not move file: " . $e);
-            }
-
-            $ret = [
-                "error" => false
-            ];
-
-            // Redirects will not work for fetch, so send destination url in result
-            if (get($payload, "go", false)) {
-                // Get the admin edit-page url
-                //$url = $this->grav['twig']->twig->getExtension('Grav\Plugin\Admin\AdminTwigExtension')->getPageUrl($this, $targetPage);
-                $url = $this->grav['uri']->rootUrl(false) . "/admin/pages" . $targetPage->route();
-                $ret["destination_url"] = $url;
-            }
-
-            //header('HTTP/1.1 200 OK');
-            return $ret;
-        });
-
+        ]);
     }
 
     public function onTwigTemplatePaths()

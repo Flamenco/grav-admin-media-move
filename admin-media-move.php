@@ -25,6 +25,7 @@
 
 namespace Grav\Plugin;
 
+use Grav\Common\Grav;
 use Grav\Common\Plugin;
 
 /**
@@ -61,6 +62,10 @@ class AdminMediaMovePlugin extends Plugin
         }
 
         if ($this->grav['uri']->path() == $this->getPath()) {
+            return;
+        }
+
+        if (!self::_checkDependencies($this)) {
             return;
         }
 
@@ -144,4 +149,73 @@ class AdminMediaMovePlugin extends Plugin
         header('HTTP/1.1 400 Bad Request');
         die(json_encode(['error' => ['msg' => $msg]]));
     }
+
+    /**
+     * Checks plugin dependencies.  Call this after all plugins have been loaded.
+     *
+     * @param $plugin
+     * @param $issues array Receives issues as strings.  If null, grav['messages'] is used.
+     * @return bool true if dependencies are met.
+     */
+    public static function _checkDependencies($plugin, &$issues = null)
+    {
+        $grav = Grav::instance();
+        $errors = 0;
+        $messages = $grav['messages'];
+        $plugins = $grav['plugins'];
+
+        $deps = $plugin->getBlueprint()->dependencies;
+        if ($deps) {
+            foreach ($deps as $dep) {
+                $name = $dep['name'];
+                if ($name === 'grav') {
+                    //TODO check grav version
+                    continue;
+                }
+                $version = $dep['version'];
+                if (!preg_match("#^([<>=]+)?(.*)#", $version, $m)) {
+                    continue;
+                }
+                $compare = $m[1];
+                $version = $m[2];
+                if (!$compare) {
+                    $compare = '=';
+                }
+
+                $found = $plugins->get($name);
+                if (!$found) {
+                    $msg = "Missing Dependency: '$name'";
+                    if (is_array($issues)) {
+                        $issues[] = $msg;
+                    } else {
+                        $messages->add($msg, 'error');
+                    }
+                    $errors++;
+                    continue;
+                }
+                $realVersion = $found->blueprints()->version;
+                if (!version_compare($realVersion, $version, $compare)) {
+                    $msg = "Missing Dependency: '$name' $version";
+                    if (is_array($issues)) {
+                        $issues[] = $msg;
+                    } else {
+                        $messages->add($msg, 'error');
+                    }
+                    $errors++;
+                    continue;
+                }
+            }
+        }
+        if ($errors > 0) {
+            $msg = "Plugin '$plugin->name' was not loaded due to dependency issues";
+            if (is_array($issues)) {
+                $issues[] = $msg;
+            } else {
+                $messages->add($msg, 'error');
+            }
+        }
+        return $errors === 0;
+    }
+
+
 }

@@ -1,3 +1,9 @@
+# v1.0.3
+## 2/24/2018
+
+1. [](#new)
+    * Check that dependencies are enabled before loading
+    
 # v1.0.2
 ## 2/24/2018
 

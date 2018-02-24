@@ -23,7 +23,7 @@
 #
 
 name: Admin Media Move
-version: 1.0.1
+version: 1.0.2
 description: Moves media from one page to another.
 icon: plug
 author:

@@ -151,7 +151,7 @@ class AdminMediaMovePlugin extends Plugin
     }
 
     /**
-     * Checks plugin dependencies.  Call this after all plugins have been loaded.
+     * Checks plugin dependencies.  Call this after all plugins have been loaded and are enabled.
      *
      * @param $plugin
      * @param $issues array Receives issues as strings.  If null, grav['messages'] is used.
@@ -192,6 +192,19 @@ class AdminMediaMovePlugin extends Plugin
                     }
                     $errors++;
                     continue;
+                }
+                if (!$grav['config']->get("plugins.$name.enabled")) {
+                    //BUG admin should always be enabled if installed
+                    if ($name !== 'admin') {
+                        $msg = "Dependency Not Enabled: '$name'";
+                        if (is_array($issues)) {
+                            $issues[] = $msg;
+                        } else {
+                            $messages->add($msg, 'error');
+                        }
+                        $errors++;
+                        continue;
+                    }
                 }
                 $realVersion = $found->blueprints()->version;
                 if (!version_compare($realVersion, $version, $compare)) {

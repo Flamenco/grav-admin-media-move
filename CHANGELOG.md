@@ -1,3 +1,9 @@
+# v1.0.4
+## 12/11/2018
+
+1. [](#bugfix)
+    * Update addInlineJs load order
+    
 # v1.0.3
 ## 2/24/2018
 

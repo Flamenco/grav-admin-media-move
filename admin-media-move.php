@@ -140,7 +140,7 @@ class AdminMediaMovePlugin extends Plugin
         $jsConfig_move = [
             'MODAL' => $modal_move
         ];
-        $this->grav['assets']->addInlineJs('var ADMIN_ADDON_MEDIA_MOVE = ' . json_encode($jsConfig_move) . ';', -1000, false);
+        $this->grav['assets']->addInlineJs('var ADMIN_ADDON_MEDIA_MOVE = ' . json_encode($jsConfig_move) . ';', -1000);
         $this->grav['assets']->addJs('plugin://admin-media-move/assets/media_move_action.js', -1000, false);
     }
 
